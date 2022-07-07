@@ -1,0 +1,118 @@
+[gd_scene load_steps=15 format=2]
+
+[ext_resource path="res://back.png" type="Texture" id=1]
+[ext_resource path="res://scenes/board/board.gd" type="Script" id=2]
+[ext_resource path="res://scenes/ninja_base/ninja/frame.png" type="Texture" id=3]
+[ext_resource path="res://scenes/board/sprite/start_btn.png" type="Texture" id=4]
+[ext_resource path="res://scenes/ninja_base/ninja/ninja_circle.png" type="Texture" id=5]
+
+[sub_resource type="Shader" id=4]
+code = "shader_type canvas_item;
+
+uniform vec4  frame_color : hint_color;
+
+void fragment(){
+    vec4 frame = texture(TEXTURE, UV);
+  
+    COLOR.a = frame.a*frame_color.a;
+    COLOR.rgb = frame_color.rgb*frame.a;
+}"
+
+[sub_resource type="ShaderMaterial" id=5]
+shader = SubResource( 4 )
+shader_param/frame_color = Color( 0, 0, 0, 0 )
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+uniform vec4  frame_color : hint_color;
+
+void fragment(){
+    vec4 frame = texture(TEXTURE, UV);
+  
+    COLOR.a = frame.a*frame_color.a;
+    COLOR.rgb = frame_color.rgb*frame.a;
+}"
+
+[sub_resource type="ShaderMaterial" id=2]
+resource_local_to_scene = true
+shader = SubResource( 1 )
+shader_param/frame_color = null
+
+[sub_resource type="AtlasTexture" id=3]
+flags = 4
+atlas = ExtResource( 4 )
+region = Rect2( 0, 0, 64, 64 )
+
+[sub_resource type="StyleBoxFlat" id=6]
+bg_color = Color( 0.0588235, 0.968627, 0.0862745, 1 )
+
+[sub_resource type="StyleBoxFlat" id=7]
+bg_color = Color( 0.917647, 0.0705882, 0.956863, 1 )
+
+[sub_resource type="StyleBoxFlat" id=8]
+bg_color = Color( 0.0470588, 0.968627, 0.847059, 1 )
+
+[sub_resource type="StyleBoxEmpty" id=9]
+
+[node name="board" type="TextureRect"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+texture = ExtResource( 1 )
+stretch_mode = 1
+script = ExtResource( 2 )
+
+[node name="TextureRect3" type="TextureRect" parent="."]
+material = SubResource( 5 )
+margin_right = 64.0
+margin_bottom = 64.0
+texture = ExtResource( 5 )
+
+[node name="YSort" type="YSort" parent="."]
+
+[node name="TextureRect" type="TextureRect" parent="YSort"]
+material = SubResource( 2 )
+margin_right = 64.0
+margin_bottom = 64.0
+texture = ExtResource( 3 )
+
+[node name="TextureRect2" type="TextureRect" parent="."]
+anchor_left = 0.9375
+anchor_top = 0.893333
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_right = 64.0
+margin_bottom = 63.9999
+texture = SubResource( 3 )
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="ItemList" type="ItemList" parent="."]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+margin_left = -371.5
+margin_top = -40.0
+margin_right = 371.5
+focus_mode = 0
+custom_colors/guide_color = Color( 0.988235, 0.0352941, 0.0352941, 0 )
+custom_colors/font_color_selected = Color( 0, 0, 0, 0 )
+custom_colors/font_color = Color( 0, 0, 0, 0 )
+custom_styles/selected_focus = SubResource( 6 )
+custom_styles/bg_focus = SubResource( 7 )
+custom_styles/selected = SubResource( 8 )
+custom_styles/bg = SubResource( 9 )
+items = [ "Item 0", null, false, "Item 1", null, false ]
+max_columns = 14
+fixed_icon_size = Vector2( 32, 32 )
+
+[node name="Timer" type="Timer" parent="."]
+autostart = true
+
+[connection signal="gui_input" from="." to="." method="_on_TextureRect_gui_input"]
+[connection signal="gui_input" from="TextureRect2" to="." method="_on_TextureRect2_gui_input"]
+[connection signal="item_selected" from="ItemList" to="." method="_on_ItemList_item_selected"]
+[connection signal="timeout" from="Timer" to="." method="_on_Timer_timeout"]
