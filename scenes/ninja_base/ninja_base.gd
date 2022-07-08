@@ -11,7 +11,7 @@ signal ninja_selected(ninja)
 signal ninja_deselected(ninja)
 
 func _ready():
-	select(Color(0,0,1,1))
+	select(Color(0,0,0,0))
 #	complete_steps([Vector2(1,0),Vector2(1,1),Vector2(0,1)])
 
 

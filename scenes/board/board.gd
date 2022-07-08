@@ -15,6 +15,7 @@ var board_offset = Vector2(64,64)
 var target = null
 var attacker = null
 var move_target = null
+var last_observed = null
 var target_ability = null
 var ninjas = {}
 var occupied_cell = [] #только для генерации карты
@@ -24,6 +25,29 @@ enum ability {HOLD=0,SPEED=1,GUARD=2,SURIKEN=3,KHUNAI=4,FIST=5,SWORD=6,BOMB=7,WH
 SHADOW_KICK=13,SHADOW_FIST=14,SHADOW_SUCK=15,SHADOW_SUMMOM=16,SHADOW_RESPOWN=17,SHADOW_BOOM=18,SHADOW_SURIKEN=19}
 
 enum ability_param {DISTANCE,DAMAGE,CALL,POINTS}
+var ability_text = {
+	ability.HOLD: "безмятежность" ,
+	ability.SPEED: "движение",
+	ability.GUARD: "защита",
+	ability.SURIKEN: "сюрикен",
+	ability.KHUNAI: "кунай",
+	ability.FIST: "удар",
+	ability.SWORD: "меч",
+	ability.BOMB: "бомба",
+	ability.WHIP: "кнут",
+	ability.HIKICK: "вертуха",
+	ability.BOW: "лук",
+	ability.SPEAR: "копье",
+	ability.HEALTH: "живучесть",
+	ability.SHADOW_KICK:"теневой разрыв",
+	ability.SHADOW_FIST:"теневой удар",
+	ability.SHADOW_SUCK:"теневой отсос",
+	ability.SHADOW_SUMMOM:"теневой призыв",
+	ability.SHADOW_RESPOWN:"теневое воскрешение",
+	ability.SHADOW_BOOM:"теневой БАБАХ!",
+	ability.SHADOW_SURIKEN:"теневой сюрикен"
+}
+
 var ability_stats = {
 	ability.HOLD : {
 		ability_param.DISTANCE : -1,
@@ -237,7 +261,8 @@ var game_info = {
 	"game_status" : "demo",
 	"shadows" : 5,
 	"ninja" : 5,
-	"speed" : 3
+	"speed" : 3,
+	"menu_visible" : false
 	}
 
 var monitor = {
@@ -257,6 +282,8 @@ func _ready():
 		$YSort.add_child(load_ninja())	
 		$YSort.add_child(load_shadow())
 	add_child(my_hud)
+	my_hud.connect("start_game",self,"on_game_satrt")
+	my_hud.connect("exit_game",self,"on_game_exit")
 	
 	a_star.board_size = board_size 
 	a_star.generate_board()
@@ -269,6 +296,9 @@ func _ready():
 	ninjas_keys.shuffle()
 	game_info["turn_queue"] = ninjas_keys
 	
+	log_massage("ТЁРН "+str(game_info["turn"])+"\n")
+	center_massage("ТЁРН "+str(game_info["turn"]))
+	$Timer.start()
 	auto_player()
 	
 
@@ -292,7 +322,7 @@ func load_ninja() :
 	ninja_pix.animation = "ninja"
 	ninja_pix.frame = randi()%3
 	ninja1.connect("ninja_selected",self,"on_ninja_selected")
-	ninja1.connect("ninja_selected",self,"on_ninja_deselected")
+	ninja1.connect("ninja_deselected",self,"on_ninja_deselected")
 #нам осталось сгенерировать и привязать скилы бег и удар рукой есть у всех 
 	var p_summ = 0.0
 	for i in 13 :
@@ -313,7 +343,7 @@ func load_ninja() :
 		ninja_hp+=2* player_stats[ability.HEALTH]
 	ninjas_stats[ninja1.board_ID]["hp"] = ninja_hp
 	 
-	var ninja_points = randi()%4+randi()%4+randi()%4 + randi()%4 
+	var ninja_points = randi()%4+randi()%4+randi()%4 
 	if ninjas_stats[ninja1.board_ID].has(ability.SPEED) :
 		ninja_points+=4* player_stats[ability.SPEED]
 	else :
@@ -339,7 +369,7 @@ func load_shadow() :
 	ninja_pix.animation = "shadow"
 	ninja_pix.frame = randi()%6
 	ninja1.connect("ninja_selected",self,"on_ninja_selected")
-	ninja1.connect("ninja_selected",self,"on_ninja_deselected")
+	ninja1.connect("ninja_deselected",self,"on_ninja_deselected")
 #нам осталось сгенерировать и привязать скилы бег и удар рукой есть у всех 
 	var p_summ = 0.0
 	for i in 7 :
@@ -357,7 +387,7 @@ func load_shadow() :
 
 	ninjas_stats[ninja1.board_ID]["hp"] = ninja_hp
 	 
-	var ninja_points = randi()%4+randi()%4+randi()%4 + randi()%4 + int(p_summ*4) 
+	var ninja_points = randi()%4+randi()%4+ randi()%4 + int(p_summ*4) 
 	
 	ninjas_stats[ninja1.board_ID]["points"] = ninja_points
 	return ninja1 
@@ -365,11 +395,13 @@ func load_shadow() :
 
 func on_ninja_selected(ninja) :
 #	printt(ninja,atacker,target)
-	if attacker == null :
-		attacker = ninja
-		ninja.select(Color(0,1,0,1))
-		
-	elif target == null  and ninja != attacker  :
+	if attacker == ninja :
+		return
+#	if attacker == null :
+#		attacker = ninja
+#		ninja.select(Color(0,1,0,1))
+#
+	elif target == null   :
 		target = ninja
 		ninja.select(Color(1,0,0,1))
 		move_target = null
@@ -380,8 +412,8 @@ func on_ninja_selected(ninja) :
 	
 		
 	elif attacker == ninja :
-		ninja.select(Color(0,0,0,0))
-		attacker = null
+#		ninja.select(Color(0,0,0,0))
+#		attacker = null
 		move_target = null
 		$TextureRect3.material.set_shader_param("frame_color",Color(0,0,1,0))
 		
@@ -401,6 +433,15 @@ func on_ninja_selected(ninja) :
 	
 	
 func on_ninja_deselected(ninj) :
+	if last_observed != null and last_observed != attacker:
+		last_observed.select(Color(1,1,1,0))
+	if  ninj != attacker :
+		ninj.select(Color(1,1,1,1))
+	last_observed = ninj
+	target = null
+	move_target = null
+	$TextureRect3.material.set_shader_param("frame_color",Color(0,0,1,0))
+	load_ninja_menu(ninj)
 	pass
 	
 
@@ -431,8 +472,8 @@ func _on_TextureRect_gui_input(event):
 				move_target = cursor_cell
 				$TextureRect3.rect_position = board_offset+cursor_cell*board_step
 				$TextureRect3.material.set_shader_param("frame_color",Color(0,0,1,1))
-		
-			if target != null :
+
+			if target != null : 
 				target.select(Color(0,0,0,0))
 				target = null
 			
@@ -442,17 +483,34 @@ func _on_TextureRect_gui_input(event):
 
 
 
-
+#зеленая кнопка 
 func _on_TextureRect2_gui_input(event):
 	if event.is_action_released("ui_select") :
-		if player_turn :
-			$TextureRect2.texture.region = Rect2(64,0,64,64)
-			player_turn = false
+		if !player_turn :
+			return
+		$TextureRect2.texture.region = Rect2(64,0,64,64)
+		player_turn = false
+		ninjas_stats[attacker.board_ID]["points"] = 0
+		attacker.select(Color(1,1,1,0))
+		attacker = null
+		auto_player()
 # обработка ходв
-			apply_ability(attacker,target,move_target,target_ability)
-		else :
-			$TextureRect2.texture.region = Rect2(0,0,64,64)
-			player_turn = true
+#			apply_ability(attacker,target,move_target,target_ability)
+#		else :
+#			$TextureRect2.texture.region = Rect2(0,0,64,64)
+#			player_turn = true
+#	if event.is_action_released("ui_select") :
+#		if player_turn :
+#			$TextureRect2.texture.region = Rect2(64,0,64,64)
+#			player_turn = false
+## обработка ходв
+#			apply_ability(attacker,target,move_target,target_ability)
+#		else :
+#			$TextureRect2.texture.region = Rect2(0,0,64,64)
+#			player_turn = true
+			
+			
+			
 			
 func load_ninja_menu(_attacker) :
 	$ItemList.clear()
@@ -467,7 +525,10 @@ func load_ninja_menu(_attacker) :
 #			printt(i,ninjas_abilityes.keys(),ninjas_abilityes.keys()[i],ability)
 			ability_icon.region = Rect2( i%4*32,i/ 4 * 32,	32,	32)
 			$ItemList.add_icon_item(ability_icon)
+#			$ItemList.set_item_tooltip ( ability_menu_ids.size(),ability_text[i])
+#			$ItemList.set_item_tooltip_enabled(ability_menu_ids.size(),true)
 			ability_menu_ids[ability_menu_ids.size()] = i 
+			
 		
 
 
@@ -475,10 +536,17 @@ func load_ninja_menu(_attacker) :
 func _on_ItemList_item_selected(index):
 #	printt(index,ability_menu_ids,ability)
 	target_ability = ability_menu_ids[index]
+	my_hud.get_node("log/Label2").text  = ability_text[ability_menu_ids[index]]
+	my_hud.get_node("log/Label2").rect_position = get_local_mouse_position()-Vector2(0,80)
+	my_hud.get_node("log/Label2").visible = true
+	$Timer.start()
 #	print( ability.keys()[ability.values().find(target_ability)] )
 #	pass # Replace with function body.
 
+
+
 func apply_ability(_attacker,_target,_move_target,_ability):
+	$play.texture.region = Rect2(0,0,64,64)
 	if _ability == ability.SPEED :
 		var attacker_point = _attacker.current_cell
 		var final_point = null
@@ -489,7 +557,18 @@ func apply_ability(_attacker,_target,_move_target,_ability):
 		else :
 			return
 # надо переписать чтоб бежал пока не кончатся очки, и не забыть их отнять
-		_attacker.complete_steps(a_star.finde_path(attacker_point,final_point))
+		if attacker_point == final_point :
+			return
+		var _attacker_offset_path =	a_star.finde_path(attacker_point,final_point)
+		var _attacker_points = ninjas_stats[_attacker.board_ID]["points"]
+		if _attacker_points < _attacker_offset_path.size():
+			_attacker_offset_path.resize(int(_attacker_points))
+		ninjas_stats[_attacker.board_ID]["points"] -= _attacker_offset_path.size()		
+				
+		attacker.complete_steps(_attacker_offset_path)
+		
+		
+		
 	if _ability in [ability.FIST,ability.SURIKEN,ability.KHUNAI,ability.SWORD,ability.WHIP,ability.HIKICK,ability.BOW,ability.SPEAR]:
 #		проверяем есть ли цель 
 #		проверь дистанцию 
@@ -537,30 +616,44 @@ func apply_attack_on_target(_attacker,_target,target_distance,_ability) :
 	
 	if _ability in [ability.SHADOW_SUCK] :
 		ninjas_stats[_target.board_ID]["points"] =0
+		log_massage( str(_attacker.status)+" использует "+str(ability_text[_ability])+", "+str(_target.status)+" теряет все очки действия!\n")
 	elif  _ability in [ability.SHADOW_FIST]  :
 		ninjas_stats[_target.board_ID]["hp"] -= attack_damage
-		ninjas_stats[_attacker.board_ID]["hp"] += 2
+		ninjas_stats[_attacker.board_ID]["hp"] += 1
+		log_massage( str(_attacker.status)+" использует "+str(ability_text[_ability])+", "+str(_target.status)+" получает "+str(attack_damage)+ " урона!\n" )
+		log_massage( str(_attacker.status)+" восстанавливает здоровье!\n")
 	else:
 		ninjas_stats[_target.board_ID]["hp"] -= attack_damage
+		log_massage( str(_attacker.status)+" использует "+str(ability_text[_ability])+", "+str(_target.status)+" получает "+str(attack_damage)+ " урона!\n" )
 #анимация
 #
 #	ninjas_stats.erase(ninjas.keys()[i])
 #	a_star.switch_points([ninjas[ninjas.keys()[i]].current_cell],false)
 #	ninjas.erase(ninjas.keys()[i])
 #	my_ninja.queue_free()
+
+#	log_massage( str(_attacker.status)+" использует "+str(ability_text[_ability])+", "+str(_target.status)+" получает "+str(attack_damage)+ " урона!\n" )
+	
+	var skill_animation = load("res://scenes/skill_animation/skill_animation.tscn").instance()
+	skill_animation.position = _attacker.rect_position
+	add_child(skill_animation)
+	skill_animation.stretch_animftion(_target.rect_position-_attacker.rect_position,randi()%8)
+	
 	print("удар ",attack_damage ,"HP осталось ",ninjas_stats[_target.board_ID]["hp"]) 
 	if ninjas_stats[_target.board_ID]["hp"] <=0 :
-#сообщение анимация смерти 
-		target = null
+#сообщение анимация смерти
+		log_massage( "И "+str(_target.status)+" погибает!"+"\n")
 		var game_info_key = game_info["turn_queue"].find(_target.board_ID)
-		game_info["turn_queue"].remove(game_info_key)
+		if game_info_key >= 0 :
+			game_info["turn_queue"].remove(game_info_key)
 		ninjas_stats.erase(_target.board_ID)
 		a_star.switch_points([ninjas[_target.board_ID].current_cell],false)
 		ninjas.erase(_target.board_ID)
+		target = null
 		_target.queue_free()
-		
+
 	
-	auto_player()
+	
 	return
 	
 func get_distance(cell_1,cell_2) :
@@ -588,9 +681,9 @@ func ai_1(board_id,enemy_status="ninja"):
 		"shadow" : [ability.FIST,ability.SURIKEN,ability.KHUNAI,ability.SWORD,ability.WHIP,ability.HIKICK,ability.BOW,ability.SPEAR] 
 		}
 	var	my_points = ninjas_stats[board_id]["points"]
-	
-	if my_points <=0 :
-		return null
+#
+#	if my_points <=0 :
+#		return null
 	var enemeis = {}
 	var my_skills = {}
 	for i in ninjas_stats[board_id].keys():
@@ -665,6 +758,7 @@ func ai_1(board_id,enemy_status="ninja"):
 	return [best_enemy,min(best_D_SR,my_points),best_skill]
 		
 func auto_player():
+	
 	monitor["auto_play"] +=1 
 	var ninja_survived = false
 	var shadow_survived	= false
@@ -683,15 +777,20 @@ func auto_player():
 #				my_ninja.queue_free()
 		i-=1
 	if	!shadow_survived and ninja_survived:
-			
-#сообщение
-			print ("ninjas win")
+			log_massage("НИНДЗЯ ПОБЕДИЛИ! ОС!\n")
+			center_massage("НИНДЗЯ ПОБЕДИЛИ! ОС!")
+			$EOFG_20sec.start()
+			$Timer.stop()
 			return
 			
 	elif !ninja_survived and  shadow_survived:
-			print ("shadows win")
+			log_massage("ТЕНИ ПОБЕДИЛИ! ХЕ-ХИ-ХА!\n")
+			center_massage("ТЕНИ ПОБЕДИЛИ! ХЕ-ХИ-ХА!")
+			$EOFG_20sec.start()
+			$Timer.stop()
 			return	
-	
+			
+			
 	if game_info["turn_queue"].size() == 0 :
 		for j in ninjas_stats.keys().size() :
 			print( ninjas_stats[ninjas_stats.keys()[j]])
@@ -707,6 +806,9 @@ func auto_player():
 		ninjas_keys.shuffle()
 		game_info["turn_queue"] = ninjas_keys
 		game_info["turn"] += 1
+		log_massage("ТЁРН "+str(game_info["turn"])+"\n")
+		center_massage("ТЁРН "+str(game_info["turn"]))
+		$Timer.start()
 		printt (ninjas_keys)
 		
 		for k in  ninjas_keys :
@@ -731,10 +833,30 @@ func auto_player():
 	
 		
 	elif ninjas[game_info["turn_queue"][0]].status == "ninja" and game_info["game_status"] != "demo" :
-		return
+		
+		if  ninjas_stats[game_info["turn_queue"][0]]["points"]<=0 :
+			ninjas[game_info["turn_queue"][0]].select(Color(1,1,1,0))
+			game_info["turn_queue"].remove(0)
+			auto_player()
+			return
+				
+		if 	game_info["turn_queue"].size() <= 0 :
+			auto_player()
+			return
+		else:
+			attacker = ninjas[game_info["turn_queue"][0]]
+			attacker.select(Color(0,1,0,1))		
+			load_ninja_menu(attacker)
+			$TextureRect2.texture.region = Rect2(0,0,64,64)
+			
+			
+			player_turn = true
+			return
 	else :
 		if  ninjas_stats[game_info["turn_queue"][0]]["points"]<=0 :
 			game_info["turn_queue"].remove(0)
+			auto_player()
+			return
 				
 		if 	game_info["turn_queue"].size() <= 0 :
 			auto_player()
@@ -764,8 +886,94 @@ func auto_player():
 
 
 func _on_Timer_timeout():
-	var monitor_label = my_hud.get_node("log/Label") 
-	monitor_label.text =""
-	for i in monitor.keys() :
-		monitor_label.text += str(i)+" "+str(monitor[i])+ "\n"
+	my_hud.get_node("log/Label").text = "" 
+	my_hud.get_node("log/Label2").text = ""
+	my_hud.get_node("log/Label2").visible = false
+	
+	
+func center_massage(massage_string):
+	my_hud.get_node("log/Label").text = massage_string
+
+func log_massage(massage_string):
+	my_hud.get_node("log/RichTextLabel").bbcode_text += massage_string  
+	
+
+
+
+	
+	
+	
+#	for i in ninjas_abilityes.keys() :
+#		if typeof(i) != TYPE_STRING or i in [ability.HEALTH]:
+#			var ability_icon = ability_atlas_texture.duplicate()
+##			printt(i,ninjas_abilityes.keys(),ninjas_abilityes.keys()[i],ability)
+#			ability_icon.region = Rect2( i%4*32,i/ 4 * 32,	32,	32)
+#			$ItemList.add_icon_item(ability_icon)
+##			$ItemList.set_item_tooltip ( ability_menu_ids.size(),ability_text[i])
+##			$ItemList.set_item_tooltip_enabled(ability_menu_ids.size(),true)
+#			ability_menu_ids[ability_menu_ids.size()] = i 
+#	pass # Replace with function body.
+
+
+func _on_play_gui_input(event):
+	if !player_turn :
+		return	
+	if event.is_action_released("ui_select") :
+		$play.texture.region = Rect2(64,0,64,64)
+		apply_ability(attacker,target,move_target,target_ability)
+		
+#		player_turn = false
+	
+func on_game_exit():
+	 get_tree().quit()
+	
+func on_game_satrt():
+	 game_restart("player")
+func game_restart(mod) :
+	occupied_cell=[]
+	for i in ninjas.keys() :
+		a_star.switch_points([ninjas[i].current_cell],false)
+		ninjas[i].queue_free()
+	ninjas = {}
+	ninjas_stats = {}
+	game_info["turn"] = 0
+	game_info["game_status"] = mod
+	game_info["turn_queue"] = []
+	target = null
+	attacker = null
+	move_target = null
+	last_observed = null
+	target_ability = null
+	var nin_count = 3+randi()%6 
+	for i in nin_count :
+		$YSort.add_child(load_ninja())	
+		$YSort.add_child(load_shadow())
+	a_star.switch_points(occupied_cell,true)
+	var ninjas_keys = ninjas.keys()
+	ninjas_keys.shuffle()
+	game_info["turn_queue"] = ninjas_keys
+	log_massage("restart in game mod: "+str(game_info["game_status"])+"\n")
+	log_massage("ТЁРН "+str(game_info["turn"])+"\n")
+	center_massage("ТЁРН "+str(game_info["turn"]))
+	$Timer.start()
+	auto_player()
+
+func _input(event):
+	if !event.is_action_released("esc_butt") :
+		return
+	if ! game_info["menu_visible"] :
+		game_info["menu_visible"] = true
+		my_hud.get_node("log/VBoxContainer").visible = true
+		my_hud.get_node("log/VBoxContainer/Button").mouse_filter =Control.MOUSE_FILTER_STOP
+		my_hud.get_node("log/VBoxContainer/Button2").mouse_filter =Control.MOUSE_FILTER_STOP
+	else :
+		game_info["menu_visible"] = false
+		my_hud.get_node("log/VBoxContainer").visible = false
+		my_hud.get_node("log/VBoxContainer/Button").mouse_filter =Control.MOUSE_FILTER_IGNORE
+		my_hud.get_node("log/VBoxContainer/Button2").mouse_filter =Control.MOUSE_FILTER_IGNORE
+	
+
+func _on_EOFG_20sec_timeout():
+	
+	game_restart("demo")	
 	pass # Replace with function body.

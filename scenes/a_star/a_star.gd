@@ -39,6 +39,8 @@ func finde_path(cell_1 =Vector2(0,0),cell_2=Vector2(0,0)) :
 	if cell_2_ID_disabled :
 		board_navigator.set_point_disabled(cell_2_ID,true)
 		point_path.remove(point_path.size()-1)
+		if point_path.size() <= 0 :
+			return
 	var final_point = point_path[point_path.size()-1].x + point_path[point_path.size()-1].y*board_size.x	
 	board_navigator.set_point_disabled(final_point,true)	
 	var offset_path = []

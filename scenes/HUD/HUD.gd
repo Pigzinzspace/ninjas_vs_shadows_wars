@@ -1,5 +1,6 @@
 extends CanvasLayer
-
+signal start_game
+signal exit_game
 
 # Declare member variables here. Examples:
 # var a = 2
@@ -28,3 +29,13 @@ func _on_TextureRect_gui_input(event):
 
 
 
+
+
+func _on_Button_pressed():
+	emit_signal("start_game")
+	pass # Replace with function body.
+
+
+func _on_Button2_pressed():
+	emit_signal("exit_game")
+	pass # Replace with function body.

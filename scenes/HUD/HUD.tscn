@@ -1,25 +1,64 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=18 format=2]
 
 [ext_resource path="res://font/Arkhip_font.ttf" type="DynamicFontData" id=1]
 [ext_resource path="res://scenes/HUD/sprites/eye.png" type="Texture" id=2]
 [ext_resource path="res://scenes/HUD/HUD.gd" type="Script" id=3]
 [ext_resource path="res://font/prolamina_2_update.ttf" type="DynamicFontData" id=4]
+[ext_resource path="res://font/Exo2-SemiBoldExpanded.otf" type="DynamicFontData" id=5]
 
 [sub_resource type="StyleBoxEmpty" id=1]
 
 [sub_resource type="DynamicFont" id=2]
-size = 24
-outline_size = 2
-outline_color = Color( 0.223529, 0, 0.258824, 1 )
-font_data = ExtResource( 1 )
+size = 18
+outline_color = Color( 0.0235294, 0.0235294, 0.0235294, 1 )
+font_data = ExtResource( 5 )
+
+[sub_resource type="StyleBoxFlat" id=8]
+bg_color = Color( 0.137255, 0.203922, 0.345098, 0.596078 )
 
 [sub_resource type="AtlasTexture" id=3]
 atlas = ExtResource( 2 )
 region = Rect2( 0, 0, 64, 64 )
 
 [sub_resource type="DynamicFont" id=4]
-size = 35
+size = 48
+outline_size = 4
+font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=5]
+size = 24
+outline_size = 2
+outline_color = Color( 0.980392, 0.956863, 0.956863, 1 )
+font_data = ExtResource( 5 )
+
+[sub_resource type="StyleBoxFlat" id=6]
+bg_color = Color( 0.101961, 0.980392, 0.92549, 1 )
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color( 0.0509804, 0.172549, 0.792157, 1 )
+
+[sub_resource type="DynamicFont" id=7]
+size = 32
+outline_size = 1
+use_mipmaps = true
 font_data = ExtResource( 4 )
+
+[sub_resource type="DynamicFont" id=9]
+size = 32
+font_data = ExtResource( 1 )
+
+[sub_resource type="StyleBoxFlat" id=10]
+bg_color = Color( 0.92549, 0.239216, 0.878431, 1 )
+
+[sub_resource type="DynamicFont" id=11]
+size = 32
+outline_color = Color( 0.0431373, 0.00392157, 0.00392157, 1 )
+font_data = ExtResource( 1 )
+
+[sub_resource type="StyleBoxFlat" id=12]
+bg_color = Color( 0.239216, 0.92549, 0.909804, 1 )
 
 [node name="CanvasLayer" type="CanvasLayer"]
 script = ExtResource( 3 )
@@ -35,14 +74,15 @@ __meta__ = {
 
 [node name="RichTextLabel" type="RichTextLabel" parent="log"]
 anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_bottom = 0.228333
 mouse_filter = 2
-custom_colors/default_color = Color( 0.94902, 0.372549, 1, 1 )
+custom_colors/default_color = Color( 0.992157, 0.980392, 0.996078, 1 )
 custom_fonts/normal_font = SubResource( 2 )
+custom_styles/normal = SubResource( 8 )
 bbcode_enabled = true
-bbcode_text = "Раунд 1
+bbcode_text = "
 "
-text = "Раунд 1
+text = "
 "
 scroll_following = true
 __meta__ = {
@@ -60,15 +100,74 @@ __meta__ = {
 }
 
 [node name="Label" type="Label" parent="log"]
-anchor_left = 0.5
-anchor_right = 0.5
-margin_left = -17.0
-margin_top = 498.0
-margin_right = 451.0
-margin_bottom = 597.0
-custom_colors/font_color = Color( 0.976471, 0.945098, 0.941176, 1 )
+anchor_left = -0.000976563
+anchor_top = 0.271667
+anchor_right = 0.999023
+anchor_bottom = 0.73
+custom_colors/font_color = Color( 0.0431373, 0.137255, 0.564706, 1 )
 custom_fonts/font = SubResource( 4 )
-text = "ntcnsdfgjsdgfjdgshf
-djfhgfjghsdfjg"
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="Label2" type="Label" parent="log"]
+visible = false
+margin_left = 19.0
+margin_top = 463.0
+margin_right = 184.0
+margin_bottom = 515.0
+custom_colors/font_color = Color( 0.207843, 0.0666667, 0.756863, 1 )
+custom_fonts/font = SubResource( 5 )
+custom_styles/normal = SubResource( 6 )
+align = 1
+valign = 1
+
+[node name="Label3" type="Label" parent="log"]
+anchor_left = 0.108
+anchor_top = 1.0
+anchor_right = 0.108
+anchor_bottom = 1.0
+margin_left = -25.592
+margin_top = -54.0
+margin_right = 26.408
+margin_bottom = -1.0
+custom_colors/font_color = Color( 0.321569, 0.0666667, 0.509804, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "H 10
+P 12"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="log"]
+visible = false
+anchor_left = 0.429688
+anchor_top = 0.43
+anchor_right = 0.570313
+anchor_bottom = 0.57
+mouse_filter = 2
+__meta__ = {
+"_edit_use_anchors_": true
+}
+
+[node name="Button" type="Button" parent="log/VBoxContainer"]
+margin_right = 144.0
+margin_bottom = 40.0
+mouse_filter = 2
+custom_fonts/font = SubResource( 9 )
+custom_styles/normal = SubResource( 10 )
+text = "ИГРАТЬ"
+
+[node name="Button2" type="Button" parent="log/VBoxContainer"]
+margin_top = 44.0
+margin_right = 144.0
+margin_bottom = 84.0
+mouse_filter = 2
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 11 )
+custom_styles/normal = SubResource( 12 )
+text = "ВЫЙТИ"
+icon_align = 1
 
 [connection signal="gui_input" from="log/TextureRect" to="." method="_on_TextureRect_gui_input"]
+[connection signal="pressed" from="log/VBoxContainer/Button" to="." method="_on_Button_pressed"]
+[connection signal="pressed" from="log/VBoxContainer/Button2" to="." method="_on_Button2_pressed"]
