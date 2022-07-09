@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/222575__coby12388__bombhit01.ogg-741093626cab7bad3a2b6da80164dd40.oggstr"
+
+[deps]
+
+source_file="res://music/222575__coby12388__bombhit01.ogg"
+dest_files=[ "res://.import/222575__coby12388__bombhit01.ogg-741093626cab7bad3a2b6da80164dd40.oggstr" ]
+
+[params]
+
+loop=false
+loop_offset=0

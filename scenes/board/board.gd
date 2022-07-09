@@ -76,19 +76,19 @@ var ability_stats = {
 	ability.KHUNAI : {
 		ability_param.DISTANCE : 4,
 		ability_param.DAMAGE : 3,
-		ability_param.POINTS : 5,
+		ability_param.POINTS : 4,
 		ability_param.CALL : ""
 	},
 	ability.SWORD : {
 		ability_param.DISTANCE : 1,
 		ability_param.DAMAGE : 6,
-		ability_param.POINTS : 8,
+		ability_param.POINTS : 6,
 		ability_param.CALL : ""
 	},
 	ability.SPEAR : {
 		ability_param.DISTANCE : 2,
-		ability_param.DAMAGE : 6,
-		ability_param.POINTS : 9,
+		ability_param.DAMAGE : 7,
+		ability_param.POINTS : 7,
 		ability_param.CALL : ""
 	},
 	ability.BOMB : {
@@ -100,7 +100,7 @@ var ability_stats = {
 	ability.BOW : {
 		ability_param.DISTANCE : 6,
 		ability_param.DAMAGE : 3,
-		ability_param.POINTS : 7,
+		ability_param.POINTS : 5,
 		ability_param.CALL : ""
 	},
 	ability.WHIP : {
@@ -327,7 +327,7 @@ func load_ninja() :
 	var p_summ = 0.0
 	for i in 13 :
 		p_summ += player_stats[player_stats.keys()[i]]
-	var skills_number = int(p_summ+randi()%3)
+	var skills_number = int(p_summ+randi()%3+1)
 	ninjas_stats[ninja1.board_ID] ={}
 	ninjas_stats[ninja1.board_ID][ability.FIST] = player_stats[ability.FIST] 
 	ninjas_stats[ninja1.board_ID][ability.SPEED] = player_stats[ability.SPEED]
@@ -343,7 +343,7 @@ func load_ninja() :
 		ninja_hp+=2* player_stats[ability.HEALTH]
 	ninjas_stats[ninja1.board_ID]["hp"] = ninja_hp
 	 
-	var ninja_points = randi()%4+randi()%4+randi()%4 
+	var ninja_points = randi()%4+randi()%4+randi()%4 +2
 	if ninjas_stats[ninja1.board_ID].has(ability.SPEED) :
 		ninja_points+=4* player_stats[ability.SPEED]
 	else :
@@ -518,7 +518,7 @@ func load_ninja_menu(_attacker) :
 	if _attacker == null :
 		return
 	var ninjas_abilityes = ninjas_stats[_attacker.board_ID]
-	
+	my_hud.get_node("log/Label3").text = "H: "+str(int(ninjas_abilityes["hp"]))+"\n"+"P: "+str(int(ninjas_abilityes["points"]))
 	for i in ninjas_abilityes.keys() :
 		if typeof(i) != TYPE_STRING or i in [ability.HEALTH]:
 			var ability_icon = ability_atlas_texture.duplicate()
@@ -599,16 +599,17 @@ func apply_ability(_attacker,_target,_move_target,_ability):
 # сообщение, не хватает пунктов действия  
 			return
 		apply_attack_on_target(_attacker,_target,target_distance,_ability)
-		if _ability == ability.SHADOW_FIST :
-			ninjas_stats[_attacker.board_ID]["hp"] += int(ninjas_stats[_attacker.board_ID][_ability]) +randi()%3
-# сообщение, и восстановил N здороаья
-		if _ability == ability.SHADOW_SUCK :
-			ninjas_stats[_target.board_ID]["points"] = 0
-			
-# сообщение и высосал из цели все очки действий 
+#		if _ability == ability.SHADOW_FIST :
+#			ninjas_stats[_attacker.board_ID]["hp"] += int(ninjas_stats[_attacker.board_ID][_ability]) +randi()%3
+## сообщение, и восстановил N здороаья
+#		if _ability == ability.SHADOW_SUCK :
+#			ninjas_stats[_target.board_ID]["points"] = 0
+#
+## сообщение и высосал из цели все очки действий 
 		
 	
 func apply_attack_on_target(_attacker,_target,target_distance,_ability) :
+	$attack.play()
 	monitor["attack_on_target"] += 1
 #сообщить атакующий нанес цели ххх повреждений оружием
 	var attack_damage = randi()%ability_stats[_ability][ability_param.DAMAGE] +1+ int(ninjas_stats[_attacker.board_ID][_ability]) 
@@ -619,9 +620,15 @@ func apply_attack_on_target(_attacker,_target,target_distance,_ability) :
 		log_massage( str(_attacker.status)+" использует "+str(ability_text[_ability])+", "+str(_target.status)+" теряет все очки действия!\n")
 	elif  _ability in [ability.SHADOW_FIST]  :
 		ninjas_stats[_target.board_ID]["hp"] -= attack_damage
-		ninjas_stats[_attacker.board_ID]["hp"] += 1
+		ninjas_stats[_attacker.board_ID]["hp"] += 2
 		log_massage( str(_attacker.status)+" использует "+str(ability_text[_ability])+", "+str(_target.status)+" получает "+str(attack_damage)+ " урона!\n" )
 		log_massage( str(_attacker.status)+" восстанавливает здоровье!\n")
+	elif _ability in [ability.FIST] :
+		var extra_points = randi()%4
+		ninjas_stats[_target.board_ID]["hp"] -= attack_damage
+		ninjas_stats[_attacker.board_ID]["points"] += extra_points
+		log_massage( str(_attacker.status)+" использует "+str(ability_text[_ability])+", "+str(_target.status)+" получает "+str(attack_damage)+ " урона!\n" )
+		log_massage( str(_attacker.status)+" восстанавливает "+str(extra_points) +" очков действия!\n")
 	else:
 		ninjas_stats[_target.board_ID]["hp"] -= attack_damage
 		log_massage( str(_attacker.status)+" использует "+str(ability_text[_ability])+", "+str(_target.status)+" получает "+str(attack_damage)+ " урона!\n" )
@@ -639,7 +646,7 @@ func apply_attack_on_target(_attacker,_target,target_distance,_ability) :
 	add_child(skill_animation)
 	skill_animation.stretch_animftion(_target.rect_position-_attacker.rect_position,randi()%8)
 	
-	print("удар ",attack_damage ,"HP осталось ",ninjas_stats[_target.board_ID]["hp"]) 
+#	print("удар ",attack_damage ,"HP осталось ",ninjas_stats[_target.board_ID]["hp"]) 
 	if ninjas_stats[_target.board_ID]["hp"] <=0 :
 #сообщение анимация смерти
 		log_massage( "И "+str(_target.status)+" погибает!"+"\n")
@@ -779,21 +786,29 @@ func auto_player():
 	if	!shadow_survived and ninja_survived:
 			log_massage("НИНДЗЯ ПОБЕДИЛИ! ОС!\n")
 			center_massage("НИНДЗЯ ПОБЕДИЛИ! ОС!")
-			$EOFG_20sec.start()
-			$Timer.stop()
+			$game_over.play()
+			if game_info["game_status"] != "demo":
+				$EOFG_20sec.start()
+				$Timer.stop()
+			else :
+				game_restart("demo")
 			return
 			
 	elif !ninja_survived and  shadow_survived:
 			log_massage("ТЕНИ ПОБЕДИЛИ! ХЕ-ХИ-ХА!\n")
 			center_massage("ТЕНИ ПОБЕДИЛИ! ХЕ-ХИ-ХА!")
-			$EOFG_20sec.start()
-			$Timer.stop()
+			$game_over.play()
+			if game_info["game_status"] != "demo":
+				$EOFG_20sec.start()
+				$Timer.stop()
+			else :
+				game_restart("demo")
 			return	
 			
 			
 	if game_info["turn_queue"].size() == 0 :
-		for j in ninjas_stats.keys().size() :
-			print( ninjas_stats[ninjas_stats.keys()[j]])
+#		for j in ninjas_stats.keys().size() :
+#			print( ninjas_stats[ninjas_stats.keys()[j]])
 #делаем новый 
 # проверим не закончились ли нпс одной из сторон - если да то закончим игру 
 # удалим из списка всех кто с 0 и меньше хп
@@ -809,7 +824,7 @@ func auto_player():
 		log_massage("ТЁРН "+str(game_info["turn"])+"\n")
 		center_massage("ТЁРН "+str(game_info["turn"]))
 		$Timer.start()
-		printt (ninjas_keys)
+#		printt (ninjas_keys)
 		
 		for k in  ninjas_keys :
 			if ninjas[k].status == "ninja" :
@@ -928,8 +943,17 @@ func on_game_exit():
 	 get_tree().quit()
 	
 func on_game_satrt():
-	 game_restart("player")
+	game_info["menu_visible"] = false
+	my_hud.get_node("log/VBoxContainer").visible = false
+	my_hud.get_node("log/VBoxContainer/Button").mouse_filter =Control.MOUSE_FILTER_IGNORE
+	my_hud.get_node("log/VBoxContainer/Button2").mouse_filter =Control.MOUSE_FILTER_IGNORE
+	game_restart("player")
+	$EOFG_20sec.stop()
+	
 func game_restart(mod) :
+	if $game_theme.is_playing() :
+		$game_theme.stop()
+	$game_theme.play()
 	occupied_cell=[]
 	for i in ninjas.keys() :
 		a_star.switch_points([ninjas[i].current_cell],false)

@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/73565__stanestane__hit.ogg-33d12d62eedb7f98abd9eece3a6294ad.oggstr"
+
+[deps]
+
+source_file="res://music/73565__stanestane__hit.ogg"
+dest_files=[ "res://.import/73565__stanestane__hit.ogg-33d12d62eedb7f98abd9eece3a6294ad.oggstr" ]
+
+[params]
+
+loop=false
+loop_offset=0

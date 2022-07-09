@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/561080__unlistenable__life-on-synthwave.ogg-ceb8cd096f5d330facf80e0d25cff631.oggstr"
+
+[deps]
+
+source_file="res://music/561080__unlistenable__life-on-synthwave.ogg"
+dest_files=[ "res://.import/561080__unlistenable__life-on-synthwave.ogg-ceb8cd096f5d330facf80e0d25cff631.oggstr" ]
+
+[params]
+
+loop=false
+loop_offset=0

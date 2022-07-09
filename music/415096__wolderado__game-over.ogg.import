@@ -1,0 +1,15 @@
+[remap]
+
+importer="ogg_vorbis"
+type="AudioStreamOGGVorbis"
+path="res://.import/415096__wolderado__game-over.ogg-f911a2c7f345d59650cae322c34ed4c6.oggstr"
+
+[deps]
+
+source_file="res://music/415096__wolderado__game-over.ogg"
+dest_files=[ "res://.import/415096__wolderado__game-over.ogg-f911a2c7f345d59650cae322c34ed4c6.oggstr" ]
+
+[params]
+
+loop=false
+loop_offset=0
